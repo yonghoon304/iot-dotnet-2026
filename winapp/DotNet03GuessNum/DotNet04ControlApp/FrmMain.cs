@@ -1,3 +1,7 @@
+using System.Drawing;
+using System.ComponentModel;
+using System.Text;
+
 namespace DotNet04ControlApp
 {
     public partial class FrmMain : Form
@@ -15,6 +19,8 @@ namespace DotNet04ControlApp
                 CboFonts.Items.Add(font.Name);
             }
             TxtResult.Text = "현재 글씨체,fonts";
+            PrgStatus.Value = 0;
+
         }
 
 
@@ -156,6 +162,141 @@ namespace DotNet04ControlApp
             {
                 PicImage.SizeMode = PictureBoxSizeMode.CenterImage;
             }
+        }
+
+        private void BtnStop_Click(object sender, EventArgs e)
+        {
+            WrkProcess.CancelAsync();    // Async 비동기 처리
+        }
+
+        private void BtnNoThread_Click(object sender, EventArgs e)
+        {
+            var maximum = 100;
+            var minimum = 0;
+            var currValue = 0;
+            TxtLog.Clear();
+            PrgProcess.Minimum = minimum;
+            PrgProcess.Maximum = maximum;
+            PrgProcess.Value = 0;
+
+            BtnThread.Enabled = false;
+            BtnNoThread.Enabled = false;
+            BtnStop.Enabled = true;
+
+            // 프로세스 진행 더미로 실행
+            for (int i = 0; i < maximum; i++)
+            {
+                // 내부적으로 복잡하고 시간이 많이 소요되는 작업
+                currValue = i;
+                PrgProcess.Value = currValue;
+                TxtLog.AppendText($"진행사항 : {currValue}\r\n");
+                Thread.Sleep(100);  // 실제로는 업무 로직이 들어감
+
+            }
+            BtnNoThread.Enabled = BtnThread.Enabled = true;
+            BtnStop.Enabled = false;
+
+        }
+
+        private void BtnThread_Click(object sender, EventArgs e)
+        {
+            var maximum = 100;
+            var minimum = 0;
+            var currValue = 0;
+            TxtLog.Clear();
+            PrgProcess.Minimum = minimum;
+            PrgProcess.Maximum = maximum;
+            PrgProcess.Value = 0;
+
+            BtnThread.Enabled = false;
+            BtnNoThread.Enabled = false;
+            BtnStop.Enabled = true;
+
+            WrkProcess.WorkerReportsProgress = true;
+            WrkProcess.WorkerSupportsCancellation = true;
+            WrkProcess.RunWorkerAsync(null);
+        }
+
+        #region '백그라운드워커 이벤트핸들러'
+        // 1. 백그라운드워커 첫 시작점
+        private void WrkProcess_DoWork(object sender, DoWorkEventArgs e)
+        {
+            var maximum = 100;
+            var currValue = 0.0;
+
+            for (int i = 0; i < maximum; i++)
+            {
+                if (WrkProcess.CancellationPending)
+                {
+                    e.Cancel = true;
+                    break;
+                }
+                else
+                {
+                    currValue = i;
+                    Thread.Sleep(100);
+                    // 진행사항은 ProgressChanged 이벤트핸들러에 작성
+                    WrkProcess.ReportProgress((int)((currValue / maximum) * 100));
+                }
+            }
+        }
+        // 2. 프로세스 변경사항 UI로 전달
+        private void WrkProcess_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            // UI 스레드에 넘길값들만 실행!
+            PrgProcess.Value = e.ProgressPercentage;
+            TxtLog.AppendText($"진행률 : {PrgProcess.Value}\r\n");
+        }
+        // 3. 프로세스가 끝난 뒤 처리
+        private void WrkProcess_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if (e.Cancelled)
+            {
+                TxtLog.AppendText("작업 취소\n");
+            }
+            else
+            {
+                TxtLog.AppendText("작업 완료\n");
+            }
+
+            BtnNoThread.Enabled = BtnThread.Enabled = true;
+            BtnStop.Enabled = false;
+
+
+        }
+        #endregion
+
+        private void BtnFileLoad_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog dlg = new OpenFileDialog();
+            dlg.Multiselect = false;
+            dlg.Filter = "Text files(*.txt;*.cs;*.py;*.sql)|*.txt;*.cs;*.py;*.sql";
+            if (dlg.ShowDialog(this) == DialogResult.OK)
+            {
+                RtbEditor.LoadFile(dlg.FileName, RichTextBoxStreamType.PlainText);
+
+                string fileContent = File.ReadAllText(dlg.FileName, Encoding.UTF8);
+            }
+        }
+
+        private void BtnFileSave_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog dlg = new SaveFileDialog();
+            dlg.Filter = "RichText file(*.rtf)|*.rtf";
+            if (dlg.ShowDialog(this) == DialogResult.OK)
+            {
+                RtbEditor.SaveFile(dlg.FileName, RichTextBoxStreamType.RichNoOleObjs);
+            }
+        }
+
+        private void FrmMain_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            var res = MessageBox.Show("정말 종료하시겠습니까?", "종료여부", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (res == DialogResult.No)
+            {
+                e.Cancel = true;
+            }
+           
         }
     }
 }
