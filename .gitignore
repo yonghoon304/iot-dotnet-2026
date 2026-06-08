@@ -427,3 +427,7 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+/[Uu]nity/[Uu]nity[Bb]asic[Ss]tudy/[Ll]ibrary/
+/[Uu]nity/[Uu]nity[Bb]asic[Ss]tudy/[Tt]emp/
+/[Uu]nity/[Uu]nity[Bb]asic[Ss]tudy/[Oo]bj/
+/[Uu]nity/[Uu]nity[Bb]asic[Ss]tudy/[Bb]uild/
