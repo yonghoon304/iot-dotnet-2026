@@ -9,6 +9,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using WpfCafeKiosk.Models;  // 네임스페이스가 다르면 using문으로 import해야함
 
 namespace WpfCafeKiosk
 {
@@ -25,6 +26,8 @@ namespace WpfCafeKiosk
         {
             InitializeComponent();
         }
+
+        public OrderItem SelectOrder { get; set; }
 
         public MenuOptionWindow(string menuName, int price,string imagePath)
         {
@@ -44,6 +47,33 @@ namespace WpfCafeKiosk
         {
             DialogResult = false;
             Close();
+        }
+
+        private void BtnMinus_Click(object sender, RoutedEventArgs e)
+        {
+            if (qty <= 1) return;
+            qty--;
+            TxtQty.Text = qty.ToString();
+        }
+
+        private void BtnPlus_Click(object sender, RoutedEventArgs e)
+        {
+            qty++;
+            TxtQty.Text = qty.ToString();
+        }
+
+        private void BtnAdd_Click(object sender, RoutedEventArgs e)
+        {
+            SelectOrder = new OrderItem
+            {
+                MenuName = menuName,
+                Count = qty,
+                Price = price,
+                TotalPrice = price * qty
+            };
+            DialogResult = true;
+            Close();
+
         }
     }
 }
